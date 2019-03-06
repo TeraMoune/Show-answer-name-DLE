@@ -17,10 +17,12 @@
 		<operation action="replace">
 			<searchcode><![CDATA[$row = $db->super_query("SELECT id FROM " . PREFIX . "_comments WHERE id = '{$parent}'");]]></searchcode>
 			<replacecode><![CDATA[$row = $db->super_query("SELECT id, autor, email, is_register FROM " . PREFIX . "_comments WHERE id = '{$parent}'");
+
 if( !$row['is_register'] ) {
   
 	if( $row['email'] ) $parent_name = $db->safesql($row['autor']) . "|" . $row['email'];
 	else $parent_name = $db->safesql($row['autor']) . "|1";
+
 } else $parent_name = $db->safesql($row['autor']); 
 ]]></replacecode>
 		</operation>
@@ -43,8 +45,11 @@ if( !$row['is_register'] ) {
   	if( $config['answer_url'] AND !$this->customshow ) {
     
 	if( $row['parent_name'][1] ) {
+
 		if( preg_match('/@/',$row['parent_name'][1]) ) {
+
 			$answer_name = "<a href=\"mailto:".htmlspecialchars($row['parent_name'][1], ENT_QUOTES, $config['charset'])."\">" . $row['parent_name'][0] . "</a>";
+
 		} else $answer_name = "<a href=\"{$full_link}#comment-id-{$row['id']}\">" . $row['parent_name'][0] . "</a>";
 	
 	} else {
@@ -55,6 +60,7 @@ if( !$row['is_register'] ) {
 	} 
   
   	} else $answer_name = $row['parent_name'][0];
+
   	if( ( $config['answer_self'] OR $config['answer_self'] == '' ) AND $row['gast_name'] == $row['parent_name'][0] ) $tpl->set( '{answer}', $config['answer_self'] );
   	else $tpl->set( '{answer}', $config['answer_prefix'] . $answer_name );
   
@@ -137,6 +143,7 @@ $save_con['answer_self'] = trim(strip_tags(stripslashes( $save_con['answer_self'
   $parent_name = $row_parent['autor'] ? ", parent_name='" . @$db->safesql($row_parent['autor']) . $is_register . "' " : " ";
   
 } else $parent_name = " ";
+
 $db->query( "UPDATE " . PREFIX . "_comments SET text='{$row['text']}'{$parent_name}WHERE id='{$row['id']}'" );]]></replacecode>
 		</operation>
 	</file>
@@ -150,6 +157,12 @@ $db->query( "UPDATE " . PREFIX . "_comments SET text='{$row['text']}'{$parent_na
 'answer_prefix2'			=>  "Можно оставить пустым.",
 'answer_self'				=>  "Текст вместо имени, если пользователь ответил самому себе",
 'answer_self2'				=>  "Можно оставить пустым, отвечая самому себе ничего не выводит.<br>Установив значение 0, будет применён стандартный вывод с префиксом и именем.",]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/ajax/comments.php">
+		<operation action="replace">
+			<searchcode><![CDATA[_comments.parent,]]></searchcode>
+			<replacecode><![CDATA[_comments.parent, " . PREFIX . "_comments.parent_name,]]></replacecode>
 		</operation>
 	</file>
 </dleplugin>
