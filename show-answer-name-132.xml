@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dleplugin>
+	<name>Show answer name</name>
+	<description>Показывает в ответах на комментариях имя пользователя кому был дан ответ.
+
+По вопросам: teramoune@gmail.com</description>
+	<icon></icon>
+	<version></version>
+	<dleversion>13.2</dleversion>
+	<versioncompare>greater</versioncompare>
+	<upgradeurl></upgradeurl>
+	<filedelete>0</filedelete>
+	<needplugin></needplugin>
+	<mysqlinstall><![CDATA[ALTER TABLE `{prefix}_comments` ADD `parent_name` varchar(90) NOT NULL Default '';]]></mysqlinstall>
+	<mysqlupgrade><![CDATA[]]></mysqlupgrade>
+	<mysqlenable><![CDATA[]]></mysqlenable>
+	<mysqldisable><![CDATA[]]></mysqldisable>
+	<mysqldelete><![CDATA[ALTER TABLE `{prefix}_comments` DROP `parent_name`;]]></mysqldelete>
+	<phpinstall><![CDATA[]]></phpinstall>
+	<phpupgrade><![CDATA[]]></phpupgrade>
+	<phpenable><![CDATA[]]></phpenable>
+	<phpdisable><![CDATA[]]></phpdisable>
+	<phpdelete><![CDATA[]]></phpdelete>
+	<file name="engine/modules/addcomments.php">
+		<operation action="replace">
+			<searchcode><![CDATA[$row = $db->super_query("SELECT id FROM " . PREFIX . "_comments WHERE id = '{$parent}'");]]></searchcode>
+			<replacecode><![CDATA[$row = $db->super_query("SELECT id, autor, email, is_register FROM " . PREFIX . "_comments WHERE id = '{$parent}'");
+
+if( !$row['is_register'] ) {
+  
+	if( $row['email'] ) $parent_name = $db->safesql($row['autor']) . "|" . $row['email'];
+	else $parent_name = $db->safesql($row['autor']) . "|1";
+
+} else $parent_name = $db->safesql($row['autor']); 
+]]></replacecode>
+		</operation>
+		<operation action="replace">
+			<searchcode><![CDATA[approve, parent)]]></searchcode>
+			<replacecode><![CDATA[approve, parent, parent_name)]]></replacecode>
+		</operation>
+		<operation action="replace">
+			<searchcode><![CDATA['{$where_approve}', '{$parent}']]></searchcode>
+			<replacecode><![CDATA['{$where_approve}', '{$parent}', '{$parent_name}']]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/classes/comments.class.php">
+		<operation action="after">
+			<searchcode><![CDATA[$row['name'] = stripslashes( $row['name'] );]]></searchcode>
+			<replacecode><![CDATA[if( $config['enable_answer_name'] AND $row['parent'] AND $row['parent_name'] ) {
+  
+	$row['parent_name'] = explode('|', $row['parent_name']);
+  
+  	if( $config['answer_url'] AND !$this->customshow ) {
+    
+	if( $row['parent_name'][1] ) {
+
+		if( preg_match('/@/',$row['parent_name'][1]) ) {
+
+			$answer_name = "<a href=\"mailto:".htmlspecialchars($row['parent_name'][1], ENT_QUOTES, $config['charset'])."\">" . $row['parent_name'][0] . "</a>";
+
+		} else $answer_name = "<a href=\"{$full_link}#comment-id-{$row['id']}\">" . $row['parent_name'][0] . "</a>";
+	
+	} else {
+		
+		if( $config['allow_alt_url'] ) $answer_name = "<a href=\"" . $config['http_home_url'] . "user/" . urlencode( $row['parent_name'][0] ) . "/\">" . $row['parent_name'][0] . "</a>";
+		else  $answer_name = "<a href=\"$PHP_SELF?subaction=userinfo&amp;user=" . urlencode( $row['parent_name'][0] ) . "\">" . $row['parent_name'][0] . "</a>"; 	
+	
+	} 
+  
+  	} else $answer_name = $row['parent_name'][0];
+
+  	if( ( $config['answer_self'] OR $config['answer_self'] == '' ) AND $row['gast_name'] == $row['parent_name'][0] ) $tpl->set( '{answer}', $config['answer_self'] );
+  	else $tpl->set( '{answer}', $config['answer_prefix'] . $answer_name );
+  
+    $tpl->set( '[answer]', '' );
+  	$tpl->set( '[/answer]', '' );
+  
+} else {
+  
+  $tpl->set( '{answer}', '' );
+  $tpl->set_block( "'\\[answer\\](.*?)\\[/answer\\]'si", "" );
+  
+}]]></replacecode>
+		</operation>
+		<operation action="replace">
+			<searchcode><![CDATA[$replace_links, $category_id]]></searchcode>
+			<replacecode><![CDATA[$replace_links, $category_id, $full_link]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/modules/show.full.php">
+		<operation action="replace">
+			<searchcode><![CDATA[_comments.parent,]]></searchcode>
+			<replacecode><![CDATA[_comments.parent, " . PREFIX . "_comments.parent_name,]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/inc/options.php">
+		<operation action="after">
+			<searchcode><![CDATA[showRow( $lang['opt_sys_wdcom'], $lang['opt_sys_wdscomd'], makeDropDown( array ("-1" => $lang['editor_none'], "0" => $lang['editor_def'], "1" => "FroalaEditor (WYSIWYG)", "2" => "TinyMCE (WYSIWYG)" ), "save_con[allow_comments_wysiwyg]", "{$config['allow_comments_wysiwyg']}" ) );]]></searchcode>
+			<replacecode><![CDATA[showRow( $lang['enable_answer_name'], $lang['enable_answer_name2'], makeCheckBox( "save_con[enable_answer_name]", "{$config['enable_answer_name']}" ) );
+showRow( $lang['answer_url'], '', makeCheckBox( "save_con[answer_url]", "{$config['answer_url']}" ) );
+showRow( $lang['answer_prefix'], $lang['answer_prefix2'], "<input  type=\"text\" class=\"form-control\" style=\"max-width:150px; text-align: center;\"  name='save_con[answer_prefix]' value=\"{$config['answer_prefix']}\">" );
+showRow( $lang['answer_self'], $lang['answer_self2'], "<input  type=\"text\" class=\"form-control\" style=\"max-width:150px; text-align: center;\"  name='save_con[answer_self]' value=\"{$config['answer_self']}\">" );]]></replacecode>
+		</operation>
+		<operation action="after">
+			<searchcode><![CDATA[$save_con['allow_comments_rating'] = intval($save_con['allow_comments_rating']);]]></searchcode>
+			<replacecode><![CDATA[$save_con['enable_answer_name'] = intval($save_con['enable_answer_name']);
+$save_con['answer_url'] = intval($save_con['answer_url']);]]></replacecode>
+		</operation>
+		<operation action="before">
+			<searchcode><![CDATA[$save_con['offline_reason'] = trim(strip_tags(stripslashes( $save_con['offline_reason'] )));]]></searchcode>
+			<replacecode><![CDATA[$save_con['answer_prefix'] = trim(strip_tags(stripslashes( $save_con['answer_prefix'] )));
+$save_con['answer_self'] = trim(strip_tags(stripslashes( $save_con['answer_self'] )));]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/ajax/addcomments.php">
+		<operation action="replace">
+			<searchcode><![CDATA[_comments.rating,]]></searchcode>
+			<replacecode><![CDATA[_comments.rating, " . PREFIX . "_comments.parent, " . PREFIX . "_comments.parent_name,]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/modules/lastcomments.php">
+		<operation action="replace">
+			<searchcode><![CDATA[cm.rating,]]></searchcode>
+			<replacecode><![CDATA[cm.rating, cm.parent, cm.parent_name,]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/modules/functions.php">
+		<operation action="replace">
+			<searchcode><![CDATA[cm.rating,]]></searchcode>
+			<replacecode><![CDATA[cm.rating, cm.parent, cm.parent_name,]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/ajax/rebuild.php">
+		<operation action="replace">
+			<searchcode><![CDATA[$result = $db->query("SELECT id, text FROM " . PREFIX . "_comments LIMIT ".$startfrom.", ".$count_per_step);]]></searchcode>
+			<replacecode><![CDATA[$result = $db->query("SELECT id, text, parent, parent_name FROM " . PREFIX . "_comments LIMIT ".$startfrom.", ".$count_per_step);]]></replacecode>
+		</operation>
+		<operation action="replace">
+			<searchcode><![CDATA[$db->query( "UPDATE " . PREFIX . "_comments SET text='{$row['text']}' WHERE id='{$row['id']}'" );]]></searchcode>
+			<replacecode><![CDATA[if( $row['parent'] AND !$row['parent_name'] ) {
+  
+  $row_parent = $db->super_query( "SELECT autor, email, is_register FROM " . PREFIX . "_comments WHERE id = '".$row['parent']."'" );
+  
+  if( !$row_parent['is_register'] ) {
+    
+   	if( $row_parent['email'] ) $is_register = "|" . $row_parent['email'];
+	else $is_register = "|1";
+    
+  } else $is_register = "";
+  
+  $parent_name = $row_parent['autor'] ? ", parent_name='" . @$db->safesql($row_parent['autor']) . $is_register . "' " : " ";
+  
+} else $parent_name = " ";
+
+$db->query( "UPDATE " . PREFIX . "_comments SET text='{$row['text']}'{$parent_name}WHERE id='{$row['id']}'" );]]></replacecode>
+		</operation>
+	</file>
+	<file name="language/Russian/adminpanel.lng">
+		<operation action="after">
+			<searchcode><![CDATA[$lang = array (]]></searchcode>
+			<replacecode><![CDATA['enable_answer_name'		=>  "Включить вывод имени кому был дан ответ на комментариях",
+'enable_answer_name2'		=>  "Внимание, отключение не выключает запись данных в базу. :D<br>Но это и не важно лишних запросов и так нету.",
+'answer_url'				=>  "Вывод имени ссылкой на профиль",
+'answer_prefix'				=>  "Приставка ответа",
+'answer_prefix2'			=>  "Можно оставить пустым.",
+'answer_self'				=>  "Текст вместо имени, если пользователь ответил самому себе",
+'answer_self2'				=>  "Можно оставить пустым, отвечая самому себе ничего не выводит.<br>Установив значение 0, будет применён стандартный вывод с префиксом и именем.",]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/ajax/comments.php">
+		<operation action="replace">
+			<searchcode><![CDATA[_comments.parent,]]></searchcode>
+			<replacecode><![CDATA[_comments.parent, " . PREFIX . "_comments.parent_name,]]></replacecode>
+		</operation>
+	</file>
+</dleplugin>
