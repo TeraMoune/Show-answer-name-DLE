@@ -6,13 +6,26 @@
 По вопросам: teramoune@gmail.com</description>
 	<icon></icon>
 	<version></version>
-	<dleversion>13</dleversion>
+	<dleversion>14</dleversion>
 	<versioncompare>greater</versioncompare>
+	<upgradeurl></upgradeurl>
+	<filedelete>0</filedelete>
+	<needplugin></needplugin>
+	<mnotice>0</mnotice>
 	<mysqlinstall><![CDATA[ALTER TABLE `{prefix}_comments` ADD `parent_name` varchar(90) NOT NULL Default '';]]></mysqlinstall>
 	<mysqlupgrade><![CDATA[]]></mysqlupgrade>
 	<mysqlenable><![CDATA[]]></mysqlenable>
 	<mysqldisable><![CDATA[]]></mysqldisable>
 	<mysqldelete><![CDATA[ALTER TABLE `{prefix}_comments` DROP `parent_name`;]]></mysqldelete>
+	<phpinstall><![CDATA[]]></phpinstall>
+	<phpupgrade><![CDATA[]]></phpupgrade>
+	<phpenable><![CDATA[]]></phpenable>
+	<phpdisable><![CDATA[]]></phpdisable>
+	<phpdelete><![CDATA[]]></phpdelete>
+	<notice><![CDATA[В шаблоне comments.tpl используйте в нужном месте [answer]{answer}[/answer], {parent} выведет отдельный ID на комментарий ответа.
+
+https://github.com/TeraMoune/Show-answer-name-DLE
+https://teramoune.info/free/10-show-answer-name.html]]></notice>
 	<file name="engine/modules/addcomments.php">
 		<operation action="replace">
 			<searchcode><![CDATA[$row = $db->super_query("SELECT id FROM " . PREFIX . "_comments WHERE id = '{$parent}'");]]></searchcode>
@@ -27,8 +40,8 @@ if( !$row['is_register'] ) {
 ]]></replacecode>
 		</operation>
 		<operation action="replace">
-			<searchcode><![CDATA[approve, parent)]]></searchcode>
-			<replacecode><![CDATA[approve, parent, parent_name)]]></replacecode>
+			<searchcode><![CDATA[approve, parent]]></searchcode>
+			<replacecode><![CDATA[approve, parent, parent_name]]></replacecode>
 		</operation>
 		<operation action="replace">
 			<searchcode><![CDATA['{$where_approve}', '{$parent}']]></searchcode>
@@ -64,11 +77,14 @@ if( !$row['is_register'] ) {
   	if( ( $config['answer_self'] OR $config['answer_self'] == '' ) AND $row['gast_name'] == $row['parent_name'][0] ) $tpl->set( '{answer}', $config['answer_self'] );
   	else $tpl->set( '{answer}', $config['answer_prefix'] . $answer_name );
   
+  	$tpl->set('{parent}', $row['parent']);
+  
     $tpl->set( '[answer]', '' );
   	$tpl->set( '[/answer]', '' );
   
 } else {
   
+  $tpl->set('{parent}', '');
   $tpl->set( '{answer}', '' );
   $tpl->set_block( "'\\[answer\\](.*?)\\[/answer\\]'si", "" );
   
@@ -112,14 +128,14 @@ $save_con['answer_self'] = trim(strip_tags(stripslashes( $save_con['answer_self'
 	</file>
 	<file name="engine/modules/lastcomments.php">
 		<operation action="replace">
-			<searchcode><![CDATA[_comments.rating,]]></searchcode>
-			<replacecode><![CDATA[_comments.rating, " . PREFIX . "_comments.parent, " . PREFIX . "_comments.parent_name,]]></replacecode>
+			<searchcode><![CDATA[cm.rating,]]></searchcode>
+			<replacecode><![CDATA[cm.rating, cm.parent, cm.parent_name,]]></replacecode>
 		</operation>
 	</file>
 	<file name="engine/modules/functions.php">
 		<operation action="replace">
-			<searchcode><![CDATA[_comments.rating,]]></searchcode>
-			<replacecode><![CDATA[_comments.rating, " . PREFIX . "_comments.parent, " . PREFIX . "_comments.parent_name,]]></replacecode>
+			<searchcode><![CDATA[cm.rating,]]></searchcode>
+			<replacecode><![CDATA[cm.rating, cm.parent, cm.parent_name,]]></replacecode>
 		</operation>
 	</file>
 	<file name="engine/ajax/rebuild.php">
