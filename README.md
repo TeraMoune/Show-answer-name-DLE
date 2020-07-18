@@ -21,14 +21,7 @@
 ---
 Перед установкой если у вас уже много комментариев то произведите перестроение комментариев в соответствующем разделе.
 
-### Donate
-Для материальной благодарности.
+### Контакты
+Email: teramoune@gmail.com
 
-<img src="https://qiwi.com/favicon.ico" width="16" height="16"> [Qiwi](https://qiwi.me/teramoune)
-
-<img src="https://www.webmoney.ru/img/logo-wm-sat-small.png" width="139" height="34">
-
- - Z990082286464
- - 4100115063692304 (yandex)
-
-teramoune@gmail.com на всякий случай.
+Telegram: TeraMoune
