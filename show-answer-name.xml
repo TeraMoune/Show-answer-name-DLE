@@ -137,6 +137,10 @@ $save_con['answer_self'] = trim(strip_tags(stripslashes( $save_con['answer_self'
 			<searchcode><![CDATA[cm.rating,]]></searchcode>
 			<replacecode><![CDATA[cm.rating, cm.parent, cm.parent_name,]]></replacecode>
 		</operation>
+		<operation action="before">
+			<searchcode><![CDATA[if ( $config['auth_domain'] ) {]]></searchcode>
+			<replacecode><![CDATA[define ( 'ShowAnswerName', true );]]></replacecode>
+		</operation>
 	</file>
 	<file name="engine/ajax/rebuild.php">
 		<operation action="replace">
