@@ -25,5 +25,3 @@
 > ЮMoney: 4100115063692304
 > 
 > Qiwi nickname: TERAMOUNE
-> 
-> Wmz: Z990082286464
